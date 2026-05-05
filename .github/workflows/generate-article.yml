@@ -1,0 +1,45 @@
+name: Generate Daily Article
+
+on:
+  schedule:
+      # Roda todos os dias às 7 AM (UTC)
+          - cron: '0 7 * * *'
+            workflow_dispatch:
+
+            jobs:
+              generate-article:
+                  runs-on: ubuntu-latest
+
+                      permissions:
+                            contents: write
+
+                                steps:
+                                      - name: Checkout repo
+                                              uses: actions/checkout@v4
+
+                                                    - name: Setup Node.js
+                                                            uses: actions/setup-node@v4
+                                                                    with:
+                                                                              node-version: '18'
+
+                                                                                    - name: Generate article with Claude API
+                                                                                            id: generate
+                                                                                                    env:
+                                                                                                              CLAUDE_API_KEY: ${{ secrets.CLAUDE_API_KEY }}
+                                                                                                                      run: node scripts/generate-article.js
+                                                                                                                      
+                                                                                                                            - name: Commit and push
+                                                                                                                                    if: steps.generate.outputs.success == 'true'
+                                                                                                                                            run: |
+                                                                                                                                                      git config --local user.email "action@github.com"
+                                                                                                                                                                git config --local user.name "GitHub Action"
+                                                                                                                                                                          git add articles.json
+                                                                                                                                                                                    git commit -m "chore: Add new article - $(date +'%Y-%m-%d')"
+                                                                                                                                                                                              git push
+                                                                                                                                                                                              
+                                                                                                                                                                                                    - name: Deploy to GitHub Pages
+                                                                                                                                                                                                            if: steps.generate.outputs.success == 'true'
+                                                                                                                                                                                                                    uses: peaceiris/actions-gh-pages@v3
+                                                                                                                                                                                                                            with:
+                                                                                                                                                                                                                                      github_token: ${{ secrets.GITHUB_TOKEN }}
+                                                                                                                                                                                                                                                publish_dir: ./out
