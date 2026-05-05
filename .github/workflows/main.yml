@@ -1,0 +1,13 @@
+name: Publish Article
+
+on:
+  repository_dispatch:
+      types: [publish_article]
+
+      jobs:
+        publish:
+            runs-on: ubuntu-latest
+                steps:
+                      - name: Publish Article
+                              run: echo 'Publishing article via Lovable...'
+                              
